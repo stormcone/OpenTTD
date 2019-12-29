@@ -526,16 +526,18 @@ std::tuple<CommandCost, GroupID> CmdCreateGroupAutogenName(DoCommandFlag flags, 
 	static char str[71] = { "" };  // 5 + 31 + 3 + 31 + 1: ["cargo abbreviation"] "town/station name max. length" - "town/station name max. length""\0"
 
 	StringID cargo_abbreviation_si = INVALID_STRING_ID;
+	StringID cargo_name = INVALID_STRING_ID;
 
 	for (Vehicle *u = v; u != nullptr; u = u->Next()) {
 		if (u->cargo_cap == 0) continue;
 
 		const CargoSpec *cs = CargoSpec::Get(u->cargo_type);
 		cargo_abbreviation_si = cs->abbrev;
+		cargo_name = cs->name;
 		break;
 	}
 
-	if (cargo_abbreviation_si == INVALID_STRING_ID) return { CommandCost(STR_ERROR_GROUP_CAN_T_CREATE_NAME), INVALID_GROUP };
+	if (cargo_abbreviation_si == INVALID_STRING_ID || cargo_name == INVALID_STRING_ID) return { CommandCost(STR_ERROR_GROUP_CAN_T_CREATE_NAME), INVALID_GROUP };
 
 	// Remove the 'tiny font' formatting
 	static char buf[7] = { "" }; // 3 + 2 + 2 : TINYFONT + cargo abbreviation + "\0\0"
@@ -592,6 +594,25 @@ std::tuple<CommandCost, GroupID> CmdCreateGroupAutogenName(DoCommandFlag flags, 
 
 	if (Utf8StringLength(str) >= MAX_LENGTH_GROUP_NAME_CHARS) return { CMD_ERROR, INVALID_GROUP };
 
+	static char ca_str[64] = { "" };
+	SetDParam(0, cargo_name);
+	GetString(ca_str, STR_JUST_STRING, lastof(ca_str));
+
+	if (parent_group == INVALID_GROUP) {
+		for (const Group *g : Group::Iterate()) {
+			if (g->vehicle_type == v->type && g->owner == _current_company && !g->name.empty() && strnatcmp(ca_str, g->name.c_str()) == 0) {
+				parent_group = g->index;
+				break;
+			}
+		}
+		if (parent_group == INVALID_GROUP) {
+			std::tuple<CommandCost, GroupID> ret = CmdCreateGroup(flags, v->type, INVALID_GROUP);
+			if (std::get<0>(ret).Failed()) return ret;
+			parent_group = std::get<1>(ret);
+			CmdAlterGroup(flags, AlterGroupMode::Rename, parent_group, 0, ca_str);
+		}
+	}
+
 	std::tuple<CommandCost, GroupID> ret = CmdCreateGroup(flags, v->type, parent_group);
 
 	if (std::get<0>(ret).Failed()) return ret;
@@ -619,6 +640,31 @@ std::tuple<CommandCost, GroupID> CmdCreateGroupAutogenName(DoCommandFlag flags, 
 	}
 
 	return { CommandCost(), new_g };
+}
+
+/**
+* Create groups for all vehicles of a certain type that are not yet in any group.
+* @param flags type of operation
+* @param company_id The ID of the company whos vehicles should be auto-grouped.
+* @param vehicle_type The type of the vehicles that should be auto-grouped.
+* @return the cost of this operation or an error
+*/
+CommandCost CmdAutoGroupVehicles(DoCommandFlag flags, CompanyID company_id, VehicleType vehicle_type)
+{
+	assert(Company::GetIfValid(company_id) != nullptr);
+
+	if (flags & DC_EXEC) {
+		for (const Vehicle *v : Vehicle::Iterate()) {
+			if (v->type == vehicle_type && v->IsPrimaryVehicle() && v->owner == company_id && v->group_id == DEFAULT_GROUP) {
+				Command<CMD_CREATE_GROUP_AUTOGEN_NAME>::Do(flags, v->index, INVALID_GROUP, true);
+			}
+		}
+
+		InvalidateWindowData(GetWindowClassForVehicleType(vehicle_type), VehicleListIdentifier(VL_GROUP_LIST, vehicle_type, _current_company).Pack());
+		InvalidateWindowClassesData(GetWindowClassForVehicleType(vehicle_type));
+	}
+
+	return CommandCost();
 }
 
 /**

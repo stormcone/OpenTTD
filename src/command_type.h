@@ -327,6 +327,7 @@ enum Commands : uint16 {
 	CMD_ADD_VEHICLE_GROUP,            ///< add a vehicle to a group
 	CMD_ADD_SHARED_VEHICLE_GROUP,     ///< add all other shared vehicles to a group which are missing
 	CMD_REMOVE_ALL_VEHICLES_GROUP,    ///< remove all vehicles from a group
+	CMD_AUTO_GROUP_VEHICLES,          ///< create groups for all vehicles of a certain type that are not yet in any group
 	CMD_SET_GROUP_FLAG,               ///< set/clear a flag for a group
 	CMD_SET_GROUP_LIVERY,             ///< set the livery for a group
 
