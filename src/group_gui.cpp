@@ -940,6 +940,16 @@ public:
 				}
 				break;
 			}
+			case WID_GL_CREATE_GROUP: {
+				const VehicleID vindex = this->vehicle_sel;
+				this->vehicle_sel = INVALID_VEHICLE;
+				this->group_over = INVALID_GROUP;
+				this->SetDirty();
+
+				Command<CMD_CREATE_GROUP_AUTOGEN_NAME>::Post(STR_ERROR_GROUP_CAN_T_CREATE_AUTOGEN_NAME, vindex, this->vli.index, _ctrl_pressed);
+
+				break;
+			}
 		}
 	}
 

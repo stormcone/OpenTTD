@@ -31,6 +31,7 @@ CommandCost CmdAddSharedVehicleGroup(DoCommandFlag flags, GroupID id_g, VehicleT
 CommandCost CmdRemoveAllVehiclesGroup(DoCommandFlag flags, GroupID group_id);
 CommandCost CmdSetGroupFlag(DoCommandFlag flags, GroupID group_id, GroupFlags flag, bool value, bool recursive);
 CommandCost CmdSetGroupLivery(DoCommandFlag flags, GroupID group_id, bool primary, Colours colour);
+std::tuple<CommandCost, GroupID>  CmdCreateGroupAutogenName(DoCommandFlag flags, VehicleID vehicle_id, GroupID parent_group, bool add_shared);
 
 DEF_CMD_TRAIT(CMD_CREATE_GROUP,              CmdCreateGroup,            0, CMDT_ROUTE_MANAGEMENT)
 DEF_CMD_TRAIT(CMD_DELETE_GROUP,              CmdDeleteGroup,            0, CMDT_ROUTE_MANAGEMENT)
@@ -40,6 +41,7 @@ DEF_CMD_TRAIT(CMD_ADD_SHARED_VEHICLE_GROUP,  CmdAddSharedVehicleGroup,  0, CMDT_
 DEF_CMD_TRAIT(CMD_REMOVE_ALL_VEHICLES_GROUP, CmdRemoveAllVehiclesGroup, 0, CMDT_ROUTE_MANAGEMENT)
 DEF_CMD_TRAIT(CMD_SET_GROUP_FLAG,            CmdSetGroupFlag,           0, CMDT_ROUTE_MANAGEMENT)
 DEF_CMD_TRAIT(CMD_SET_GROUP_LIVERY,          CmdSetGroupLivery,         0, CMDT_ROUTE_MANAGEMENT)
+DEF_CMD_TRAIT(CMD_CREATE_GROUP_AUTOGEN_NAME, CmdCreateGroupAutogenName, 0, CMDT_ROUTE_MANAGEMENT)
 
 void CcCreateGroup(Commands cmd, const CommandCost &result, GroupID new_group, VehicleType vt, GroupID parent_group);
 void CcAddVehicleNewGroup(Commands cmd, const CommandCost &result, GroupID new_group, GroupID, VehicleID veh_id, bool);
